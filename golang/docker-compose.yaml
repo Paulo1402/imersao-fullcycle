@@ -1,0 +1,53 @@
+services:
+  go_app_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DEBUG: true
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      POSTGRES_HOST: postgres
+      POSTGRES_SSL_MODE: disable
+    volumes:
+      - .:/app
+      - external-storage:/media/uploads
+    tty: true
+    stdin_open: true
+    depends_on:
+      - postgres
+    networks:
+      - postgres
+
+  postgres:
+    image: postgres:13
+    ports:
+      - 5433:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    volumes:
+      - ./.docker/postgres:/var/lib/postgresql/data
+      - ./db.sql:/docker-entrypoint-initdb.d/db.sql
+    networks:
+      - postgres
+  
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin4_container
+    restart: always
+    ports:
+      - 8888:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: teste@test.com
+      PGADMIN_DEFAULT_PASSWORD: teste
+
+volumes:
+  external-storage:
+    external: true
+
+networks:
+  postgres:
+    driver: bridge

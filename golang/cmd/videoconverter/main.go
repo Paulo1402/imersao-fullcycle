@@ -1,64 +1,59 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"imersaofc/internal/converter"
+	"log/slog"
 	"os"
-	"path/filepath"
-	"regexp"
-	"sort"
-	"strconv"
+	_ "github.com/lib/pq"
 )
 
+
+func connectPostgres() (*sql.DB, error) {
+	user := getEnvOrDefault("POSTGRES_USER", "postgres")
+	password := getEnvOrDefault("POSTGRES_PASSWORD", "postgres")
+	dbName := getEnvOrDefault("POSTGRES_DB", "postgres")
+	host := getEnvOrDefault("POSTGRES_HOST", "localhost")
+	port := getEnvOrDefault("POSTGRES_PORT", "5433")
+	sslMode := getEnvOrDefault("POSTGRES_SSLMODE", "disable")
+
+	connStr := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s", user, password, dbName, host, port, sslMode)
+	db, err := sql.Open("postgres", connStr)
+
+	if err != nil {
+		slog.Error("Error connecting to database", slog.String("connStr", connStr))
+		return nil, err
+	}
+
+	err = db.Ping()
+
+	if err != nil {
+		slog.Error("Error pinging database", slog.String("connStr", connStr))
+		return nil, err
+	}
+
+	slog.Info("Connected to Postgres successfully")
+
+	return db, nil
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value, exists := os.LookupEnv((key)); exists {
+		return value
+	}
+
+	return defaultValue
+}
+
 func main() {
-	mergeChunks("mediatest/media/uploads/1", "merged.mp4")
-}
-
-func extractNumber(fileName string) int {
-	re := regexp.MustCompile(`\d+`)
-	numStr := re.FindString(filepath.Base(fileName))
-	num, err := strconv.Atoi(numStr)
+	db, err := connectPostgres()
 
 	if err != nil {
-		return -1
+		panic(err)
 	}
 
-	return num
+	vc := converter.NewVideoConverter(db)
+	vc.Handle([]byte(`{"video_id": 1, "path": "mediatest/media/uploads/1"}`))
 }
 
-func mergeChunks(inputDir, outputFile string) error {
-	chunks, err := filepath.Glob(filepath.Join(inputDir, "*.chunk"))
-
-	if err != nil {
-		return fmt.Errorf("failed to find chunks: %v", err)
-	}
-
-	sort.Slice(chunks, func(i, j int) bool {
-		return extractNumber(chunks[i]) < extractNumber(chunks[j])
-	}) 
-
-	output, err := os.Create(outputFile)
-
-	if err != nil {
-		return fmt.Errorf("failed to create output file: %v", err)
-	}
-
-	defer output.Close()
-
-	for _, chunk := range chunks {
-		input, err := os.Open(chunk)
-
-		if err != nil {
-			return fmt.Errorf("failed to open chunk: %v", err)
-		}
-
-		_, err = output.ReadFrom(input)
-
-		if err != nil {
-			return fmt.Errorf("failed to write chunk %s to merged file: %v", chunk, err)
-		}
-
-		input.Close()
-	}
-
-	return nil
-}
