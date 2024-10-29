@@ -1,4 +1,14 @@
 services:
+  django:
+    build: .
+    ports:
+      - 8000:8000
+    volumes:
+      - .:/home/django/app
+      - external-storage:/media/uploads
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
   db:
     image: postgres:15.8-alpine3.20
     ports:
@@ -16,3 +26,7 @@ services:
       - PGADMIN_DEFAULT_PASSWORD=admin
     depends_on:
       - db
+
+volumes:
+  external-storage:
+    external: true
