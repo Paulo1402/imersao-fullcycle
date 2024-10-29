@@ -9,7 +9,14 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
       POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
       POSTGRES_SSL_MODE: disable
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      CONVERSION_EXCHANGE: conversion_exchange
+      CONVERSION_QUEUE: video_conversion_queue
+      CONVERSION_KEY: conversion
+      CONFIRMATION_KEY: finish_conversion
+      CONFIRMATION_QUEUE: finish_conversion_queue
     volumes:
       - .:/app
       - external-storage:/media/uploads
@@ -19,6 +26,7 @@ services:
       - postgres
     networks:
       - postgres
+      - rabbitmq
 
   postgres:
     image: postgres:13
@@ -33,7 +41,7 @@ services:
       - ./db.sql:/docker-entrypoint-initdb.d/db.sql
     networks:
       - postgres
-  
+
   pgadmin:
     image: dpage/pgadmin4
     container_name: pgadmin4_container
@@ -43,6 +51,19 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: teste@test.com
       PGADMIN_DEFAULT_PASSWORD: teste
+    networks:
+      - postgres
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - rabbitmq
 
 volumes:
   external-storage:
@@ -50,4 +71,7 @@ volumes:
 
 networks:
   postgres:
+    driver: bridge
+
+  rabbitmq:
     driver: bridge
