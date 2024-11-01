@@ -21,5 +21,7 @@ class Command(BaseCommand):
 
     def process_message(self, body, message):
         self.stdout.write(self.style.SUCCESS(f"Processing message: {body}"))
-        create_video_service_factory().upload_chunks_to_external_storage(body['video_id'])
+        create_video_service_factory().upload_chunks_to_external_storage(
+            body["video_id"]
+        )
         message.ack()

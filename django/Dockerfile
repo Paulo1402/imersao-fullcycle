@@ -1,4 +1,4 @@
-FROM python:3.12.6-slim
+FROM python:3.13-slim
 
 ENV PYTHONDONTWRITEBYTECODE 1 # Prevents Python from writing pyc files to disc
 ENV PYTHONFAULTHANDLER 1 # Makes Python use fault handler

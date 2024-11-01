@@ -146,7 +146,6 @@ class VideoChunkUploadException(Exception):
 
 
 class Storage:
-
     def storage_chunk(self, directory: str, chunk_index: int, chunk: bytes) -> None:
         if not os.path.exists(directory):
             os.makedirs(directory)
@@ -157,7 +156,6 @@ class Storage:
             chunk_file.write(chunk)
 
     def move_chunks(self, source_path: str, dest_path: str) -> None:
-
         if not os.path.exists(dest_path):
             os.makedirs(dest_path, exist_ok=True)
 

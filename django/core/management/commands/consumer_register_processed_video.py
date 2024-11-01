@@ -21,5 +21,7 @@ class Command(BaseCommand):
 
     def process_message(self, body, message):
         self.stdout.write(self.style.SUCCESS(f"Processing message: {body}"))
-        create_video_service_factory().register_processed_video_path(body['video_id'], body['path'])
+        create_video_service_factory().register_processed_video_path(
+            body["video_id"], body["path"]
+        )
         message.ack()
